@@ -108,6 +108,10 @@ struct Value {
         return Value<T, exponent, new_len_pos, new_arr_pos, new_len_neg, new_arr_neg>(value);
     }
 
+    constexpr auto reciprocal() {
+        return Value<T, -exponent, neg, neg_arr, pos, pos_arr>
+    }
+
     template<std::size_t exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
     constexpr auto operator* (Value<T, exponent2, pos2, pos_arr2, neg2, neg_arr2> const &obj) {
         constexpr auto new_len_pos = pos + pos2;
