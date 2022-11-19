@@ -232,10 +232,6 @@ struct Value {
         return Value(value + obj.value);
     }
 
-    constexpr Value operator* (Value const &obj) {
-        return Value(value * obj.value);
-    }
-
     constexpr auto rationalize() {
         constexpr auto new_len_pos = new_len(pos_arr, neg_arr);
         constexpr auto new_len_neg = new_len(neg_arr, pos_arr);
