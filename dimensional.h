@@ -37,16 +37,14 @@ namespace {
         return result;
     }
 
-    template <std::size_t m1, std::size_t m2, std::size_t o1, std::size_t o2>
-    constexpr std::size_t new_len(std::array<Unit, m1> m1a, std::array<Unit, m2> m2a, std::array<Unit, o1> o1a, std::array<Unit, o2> o2a) {
-        auto m = concat(m1a, m2a);
-        auto o = concat(o1a, o2a);
-        std::array<bool, o1 + o2> mask = {};
+    template <std::size_t main_size, std::size_t other_size>
+    constexpr std::size_t new_len(const std::array<Unit, main_size> main, const std::array<Unit, other_size> other) {
+        std::array<bool, other_size> mask = {};
         std::size_t result = 0;
-        for(auto& el : m) {
+        for(auto& el : main) {
             std::size_t index = 0;
             bool flag = true;
-            for(auto& el2 : o) {
+            for(auto& el2 : other) {
                 if (el == el2 && mask[index] == false) {
                     mask[index] = true;
                     flag = false;
@@ -62,17 +60,15 @@ namespace {
         return result;
     }
 
-    template <std::size_t size, std::size_t m1, std::size_t m2, std::size_t o1, std::size_t o2>
-    constexpr auto fix_arr(const std::array<Unit, m1> m1a, const std::array<Unit, m2> m2a, const std::array<Unit, o1> o1a, const std::array<Unit, o2> o2a) {
+    template <std::size_t size, std::size_t main_size, std::size_t other_size>
+    constexpr auto fix_arr(const std::array<Unit, main_size> main, const std::array<Unit, other_size> other) {
         std::array<Unit, size> result = {};
-        auto m = concat(m1a, m2a);
-        auto o = concat(o1a, o2a);
-        std::array<bool, o1 + o2> mask = {};
+        std::array<bool, other_size> mask = {};
         std::size_t index = 0;
-        for(auto& el : m) {
+        for(auto& el : main) {
             std::size_t mask_index = 0;
             bool flag = true;
-            for(auto& el2 : o) {
+            for(auto& el2 : other) {
                 if (el == el2 && mask[mask_index] == false) {
                     mask[mask_index] = true;
                     flag = false;
@@ -104,12 +100,22 @@ struct Value {
         return Value(value * obj.value);
     }
 
+    constexpr auto rationalize() {
+        constexpr auto new_len_pos = new_len(pos_arr, neg_arr);
+        constexpr auto new_len_neg = new_len(neg_arr, pos_arr);
+        constexpr auto new_arr_pos = fix_arr<new_len_pos, pos, neg>(pos_arr, neg_arr);
+        constexpr auto new_arr_neg = fix_arr<new_len_neg, neg, pos>(neg_arr, pos_arr);
+        return Value<T, exponent, new_len_pos, new_arr_pos, new_len_neg, new_arr_neg>(value);
+    }
+
     template<std::size_t exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
     constexpr auto operator* (Value<T, exponent2, pos2, pos_arr2, neg2, neg_arr2> const &obj) {
-        constexpr auto new_len_pos = new_len(pos_arr, pos_arr2, neg_arr, neg_arr2);
-        constexpr auto new_len_neg = new_len(neg_arr, neg_arr2, pos_arr, pos_arr2);
-        constexpr auto new_arr_pos = fix_arr<new_len_pos, pos, pos2, neg, neg2>(pos_arr, pos_arr2, neg_arr, neg_arr2);
-        constexpr auto new_arr_neg = fix_arr<new_len_neg, neg, neg2, pos, pos2>(neg_arr, neg_arr2, pos_arr, pos_arr2);
-        return Value<T, exponent + exponent2, new_len_pos, new_arr_pos, new_len_neg, new_arr_neg>(value * obj.value);
+        constexpr auto new_len_pos = pos + pos2;
+        constexpr auto new_len_neg = neg + neg2;
+        constexpr auto new_arr_pos = concat(pos_arr, pos_arr2);
+        constexpr auto new_arr_neg = concat(neg_arr, neg_arr2);
+        constexpr auto new_exponent = exponent + exponent2;
+        auto temp = Value<T, new_exponent, new_len_pos, new_arr_pos, new_len_neg, new_arr_neg>(value * obj.value);
+        return temp.rationalize();
     }
 };
