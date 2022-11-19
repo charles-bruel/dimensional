@@ -1,4 +1,5 @@
 #include <array>
+#include <algorithm>
 
 //Default units
 #define M(x) Value<x, 0, 1, {METER}, 0, {}>
@@ -81,6 +82,8 @@ namespace {
                 ++index;
             }
         }
+        
+        std::sort(result.begin(), result.end());
 
         return result;
     }
@@ -109,7 +112,7 @@ struct Value {
     }
 
     constexpr auto reciprocal() {
-        return Value<T, -exponent, neg, neg_arr, pos, pos_arr>
+        return Value<T, -exponent, neg, neg_arr, pos, pos_arr>((T)(1.0/value));
     }
 
     template<std::size_t exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
