@@ -3,6 +3,9 @@
 #include <ostream>
 #include <string>
 
+#include <stdio.h>
+#include <iostream>
+
 #include "wlocale.h"
 
 //Default units
@@ -49,6 +52,83 @@ namespace {
         L'⁸',
         L'⁹'
     };
+
+    const std::string POSITIVE_METRIC_PREFIXES[12] {
+        "k",
+        "M",
+        "G",
+        "T",
+        "P",
+        "E",
+        "Z",
+        "Y",
+        "R",
+        "Q"
+    };
+
+    const std::string NEGATIVE_METRIC_PREFIXES[12] {
+        "m",
+        "u",//With unicode, should μ, will get fixed in function
+        "n",
+        "p",
+        "f",
+        "a",
+        "z",
+        "y",
+        "r",
+        "q"
+    };
+
+    template<class T, int exponent>
+    constexpr std::string get_value_string(T v) {
+        T value = v;
+        std::string unit_string = "";
+        if constexpr (exponent == 0) {
+            unit_string = "";
+        } else if constexpr (exponent > 0) {
+            int index = exponent / 3;
+            int factor = exponent % 3;
+            if(index - 1 >= 0) {
+                unit_string = POSITIVE_METRIC_PREFIXES[index - 1];
+            }
+            if(factor == 1) {
+                value *= 10;
+            }
+            if(factor == 2) {
+                value *= 100;
+            }
+        } else {
+            int temp = -exponent;
+            int index = temp / 3;
+            int factor = temp % 3;
+            if(factor != 0) {
+                ++index;
+            }
+            if(index - 1 >= 0) {
+                unit_string = NEGATIVE_METRIC_PREFIXES[index - 1];
+            }
+            if(factor == 1) {
+                value *= 100;
+            }
+            if(factor == 2) {
+                value *= 10;
+            }
+        }
+        
+        return std::to_string(value) + unit_string;
+    }
+
+    template<class T, int exponent>
+    constexpr std::wstring wget_value_string(T v) {
+        std::string tmp = get_value_string<T, exponent>(v);
+        std::wstring result = std::wstring(tmp.begin(), tmp.end());
+        for (std::size_t i = 0; i < result.size(); i++) {
+            if(result[i] == L'u') {
+                result[i] = L'μ';
+            }
+        }
+        return result;
+    }
 
     std::wstring wget_symbol(Unit u) {
         std::string tmp = BASE_UNIT_SYMBOLS[u];
@@ -184,7 +264,7 @@ namespace {
     }
 }
 
-template<class T, std::size_t exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
+template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
 struct Value {
     Value(T v) { value = v; }
 
@@ -210,7 +290,7 @@ struct Value {
         return Value<T, -exponent, neg, neg_arr, pos, pos_arr>((T)(1.0/value));
     }
 
-    template<std::size_t exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
+    template<int exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
     constexpr auto operator* (Value<T, exponent2, pos2, pos_arr2, neg2, neg_arr2> const &obj) {
         constexpr auto new_len_pos = pos + pos2;
         constexpr auto new_len_neg = neg + neg2;
@@ -221,7 +301,7 @@ struct Value {
         return temp.rationalize();
     }
 
-    template<std::size_t exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
+    template<int exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
     constexpr auto operator/ (Value<T, exponent2, pos2, pos_arr2, neg2, neg_arr2> const &obj) {
         constexpr auto new_len_pos = pos + neg2;
         constexpr auto new_len_neg = neg + pos2;
@@ -233,13 +313,13 @@ struct Value {
     }
 };
 
-template<class T, std::size_t exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
+template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
 std::wostream &operator<<(std::wostream &os, Value<T, exponent, pos, pos_arr, neg, neg_arr> const &m) { 
     init_locale();
-    return os << m.value << wget_unit_string<pos, pos_arr, neg, neg_arr>();
+    return os << wget_value_string<T, exponent>(m.value) << wget_unit_string<pos, pos_arr, neg, neg_arr>();
 }
 
-template<class T, std::size_t exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
+template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
 std::ostream &operator<<(std::ostream &os, Value<T, exponent, pos, pos_arr, neg, neg_arr> const &m) { 
-    return os << m.value << get_unit_string<pos, pos_arr, neg, neg_arr>();
+    return os << get_value_string<T, exponent>(m.value) << get_unit_string<pos, pos_arr, neg, neg_arr>();
 }

@@ -3,11 +3,11 @@
 #include <iostream>
 
 int main() {
-    MPS(double) speed(5.0);
+    Value<double, -6, 1, {METER}, 1, {SECOND}> speed(5.0);//km/s
     S(double) delta_time(0.01);
     S(double) onesec(1);
 
-    M(double) x = speed * delta_time;
+    auto x = speed * delta_time;
 
     auto y = x * x *x * speed * speed;
 
