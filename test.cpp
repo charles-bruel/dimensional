@@ -8,7 +8,13 @@ int main() {
 
     M(double) x = speed * delta_time;
 
-    std::cout << x.value << std::endl;
+    auto y = x * speed * speed;
+
+    std::cout << speed << std::endl;
+
+    std::wcout << speed << std::endl;
+
+    std::wcout << y << std::endl;
 
     return 0;
 }
