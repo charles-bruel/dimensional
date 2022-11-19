@@ -24,46 +24,23 @@ enum Unit {
 
 //Helper functions
 namespace {
+    const std::string BASE_UNIT_SYMBOLS[7] = {
+        "m",
+        "g",
+        "s",
+        "A",
+        "K",
+        "cd",
+        "mol"
+    };
+
     std::wstring wget_symbol(Unit u) {
-        switch(u) {
-            case METER:
-                return L"m";
-            case GRAM:
-                return L"g";
-            case SECOND:
-                return L"s";
-            case AMPERE:
-                return L"A";
-            case KELVIN:
-                return L"K";
-            case CANDELA:
-                return L"cd";
-            case MOL:
-                return L"mol";
-            default:
-                return L"?";
-        }
+        std::string tmp = BASE_UNIT_SYMBOLS[u];
+        return std::wstring(tmp.begin(), tmp.end());
     }
 
     std::string get_symbol(Unit u) {
-        switch(u) {
-            case METER:
-                return "m";
-            case GRAM:
-                return "g";
-            case SECOND:
-                return "s";
-            case AMPERE:
-                return "A";
-            case KELVIN:
-                return "K";
-            case CANDELA:
-                return "cd";
-            case MOL:
-                return "mol";
-            default:
-                return "?";
-        }
+        return BASE_UNIT_SYMBOLS[u];
     }
 
     constexpr std::wstring wmake_superscript(std::wstring input) {
