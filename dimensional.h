@@ -34,6 +34,22 @@ namespace {
         "mol"
     };
 
+    const wchar_t SUPER_SCRIPT_SYMBOLS[13] {
+        L'⁻',
+        L' ',
+        L' ',
+        L'⁰',
+        L'¹',
+        L'²',
+        L'³',
+        L'⁴',
+        L'⁵',
+        L'⁶',
+        L'⁷',
+        L'⁸',
+        L'⁹'
+    };
+
     std::wstring wget_symbol(Unit u) {
         std::string tmp = BASE_UNIT_SYMBOLS[u];
         return std::wstring(tmp.begin(), tmp.end());
@@ -43,45 +59,14 @@ namespace {
         return BASE_UNIT_SYMBOLS[u];
     }
 
-    constexpr std::wstring wmake_superscript(std::wstring input) {
-        for (std::size_t i = 0; i < input.size(); i++) {
-            switch(input[i]) {
-                case '0':
-                    input[i] = L'⁰';
-                    break;
-                case '1':
-                    input[i] = L'¹';
-                    break;
-                case '2':
-                    input[i] = L'²';
-                    break;
-                case '3':
-                    input[i] = L'³';
-                    break;
-                case '4':
-                    input[i] = L'⁴';
-                    break;
-                case '5':
-                    input[i] = L'⁵';
-                    break;
-                case '6':
-                    input[i] = L'⁶';
-                    break;
-                case '7':
-                    input[i] = L'⁷';
-                    break;
-                case '8':
-                    input[i] = L'⁸';
-                    break;
-                case '9':
-                    input[i] = L'⁹';
-                    break;
-                case '-':
-                    input[i] = L'⁻';
-                    break;
+    std::wstring wmake_superscript(int input) {
+        std::wstring result = std::to_wstring(-input);
+        for (std::size_t i = 0; i < result.size(); i++) {
+            if(result[i] >= L'-' && result[i] <= L'9') {
+                result[i] = SUPER_SCRIPT_SYMBOLS[result[i] - L'-'];
             }
         }
-        return input;
+        return result;
     }
 
     template<std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
@@ -115,7 +100,7 @@ namespace {
         for(auto& el : pos_buckets) {
             if(el > 0) {
                 result += wget_symbol(Unit(index));
-                if(el != 1) result += wmake_superscript(std::to_wstring(el));
+                if(el != 1) result += wmake_superscript(el);
             }
             ++index;
         }
@@ -123,7 +108,7 @@ namespace {
         for(auto& el : neg_buckets) {
             if(el > 0) {
                 result += wget_symbol(Unit(index));
-                result += wmake_superscript(std::to_wstring(-el));
+                result += wmake_superscript(-el);
             }
             ++index;
         }
