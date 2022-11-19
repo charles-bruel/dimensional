@@ -232,6 +232,10 @@ struct Value {
         return Value(value + obj.value);
     }
 
+    constexpr Value operator- (Value const &obj) {
+        return Value(value - obj.value);
+    }
+
     constexpr auto rationalize() {
         constexpr auto new_len_pos = new_len(pos_arr, neg_arr);
         constexpr auto new_len_neg = new_len(neg_arr, pos_arr);
@@ -255,7 +259,16 @@ struct Value {
         return temp.rationalize();
     }
 
-    
+    template<std::size_t exponent2, std::size_t pos2, std::array<Unit, pos2> pos_arr2, std::size_t neg2, std::array<Unit, neg2> neg_arr2>
+    constexpr auto operator/ (Value<T, exponent2, pos2, pos_arr2, neg2, neg_arr2> const &obj) {
+        constexpr auto new_len_pos = pos + neg2;
+        constexpr auto new_len_neg = neg + pos2;
+        constexpr auto new_arr_pos = concat(pos_arr, neg_arr2);
+        constexpr auto new_arr_neg = concat(neg_arr, pos_arr2);
+        constexpr auto new_exponent = exponent - exponent2;
+        auto temp = Value<T, new_exponent, new_len_pos, new_arr_pos, new_len_neg, new_arr_neg>(value / obj.value);
+        return temp.rationalize();
+    }
 };
 
 template<class T, std::size_t exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
