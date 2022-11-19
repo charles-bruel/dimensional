@@ -1,15 +1,23 @@
 #include <array>
 
+//Default units
 #define M(x) Value<x, 0, 1, {METER}, 0, {}>
 #define S(x) Value<x, 0, 1, {SECOND}, 0, {}>
 
 #define MPS(x) Value<x, 0, 1, {METER}, 1, {SECOND}>
 
+//Contains all metric base units
 enum Unit {
     METER,
+    GRAM,//Technically the kilogram is the base unit but this is better for consistency.
     SECOND,
+    AMPERE,
+    KELVIN,
+    CANDELA,
+    MOL,
 };
 
+//Helper functions
 namespace {
     template <typename T, std::size_t N1, std::size_t N2>
     constexpr std::array<T, N1 + N2> concat(std::array<T, N1> lhs, std::array<T, N2> rhs)
