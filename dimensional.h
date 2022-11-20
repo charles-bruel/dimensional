@@ -9,10 +9,33 @@
 #include "wlocale.h"
 
 //Default units
-#define M(x) Value<x, 0, 1, {METER}, 0, {}>
-#define S(x) Value<x, 0, 1, {SECOND}, 0, {}>
+//Metric base units
+#define DIM_M(x) Value<x, 0, 1, {METER}, 0, {}>
+#define DIM_G(x) Value<x, 0, 1, {GRAM}, 0, {}>
+#define DIM_KG(x) Value<x, 3, 1, {GRAM}, 0, {}>
+#define DIM_NS(x) Value<x, -9, 1, {SECOND}, 0, {}>
+#define DIM_uS(x) Value<x, -6, 1, {SECOND}, 0, {}>
+#define DIM_MS(x) Value<x, -3, 1, {SECOND}, 0, {}>
+#define DIM_S(x) Value<x, 0, 1, {SECOND}, 0, {}>
+#define DIM_A(x) Value<x, 0, 1, {AMPERE}, 0, {}>
+#define DIM_K(x) Value<x, 0, 1, {KELVIN}, 0, {}>
+#define DIM_MOL(x) Value<x, 0, 1, {MOL}, 0, {}>
 
-#define MPS(x) Value<x, 0, 1, {METER}, 1, {SECOND}>
+//Measure type units
+#define DIM_LEN(x) Value<x, 0, 1, {METER}, 0, {}>
+#define DIM_MASS(x) Value<x, 3, 1, {GRAM}, 0, {}> //Use kg as base unit
+#define DIM_TIME(x) Value<x, 0, 1, {SECOND}, 0, {}>
+#define DIM_TEMP(x) Value<x, 0, 1, {KELVIN}, 0, {}>//NOTE: is in kelvin
+
+//Common compound units
+#define DIM_MPS(x) Value<x, 0, 1, {METER}, 1, {SECOND}>
+#define DIM_MPSPS(x) Value<x, 0, 1, {METER}, 2, {SECOND, SECOND}>
+#define DIM_N(x) Value<x, 3, 2, {METER, GRAM}, 2, {SECOND, SECOND}>//kgms^-2
+
+//Common compound measure units
+#define DIM_VEL(x) Value<x, 0, 1, {METER}, 1, {SECOND}>
+#define DIM_ACC(x) Value<x, 0, 1, {METER}, 2, {SECOND, SECOND}>
+#define DIM_FORCE(x) Value<x, 3, 2, {METER, GRAM}, 2, {SECOND, SECOND}>//kgms^-2
 
 //Contains all metric base units
 enum Unit {
@@ -130,12 +153,12 @@ namespace {
         return result;
     }
 
-    std::wstring wget_symbol(Unit u) {
+    constexpr std::wstring wget_symbol(Unit u) {
         std::string tmp = BASE_UNIT_SYMBOLS[u];
         return std::wstring(tmp.begin(), tmp.end());
     }
 
-    std::string get_symbol(Unit u) {
+    constexpr std::string get_symbol(Unit u) {
         return BASE_UNIT_SYMBOLS[u];
     }
 
@@ -193,6 +216,11 @@ namespace {
             ++index;
         }
         return result;
+    }
+
+    template<std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
+    constexpr int get_unit_exponent_offset() {
+        return 0;
     }
 
     template <typename T, std::size_t N1, std::size_t N2>
@@ -262,6 +290,22 @@ namespace {
 
         return result;
     }
+
+    //Special cases
+    template <>
+    constexpr auto get_unit_string<2, {METER, GRAM}, 2, {SECOND, SECOND}>() {
+        return "N";
+    }
+
+    template <>
+    constexpr auto wget_unit_string<2, {METER, GRAM}, 2, {SECOND, SECOND}>() {
+        return L"N";
+    }
+
+    template <>
+    constexpr int get_unit_exponent_offset<2, {METER, GRAM}, 2, {SECOND, SECOND}>() {
+        return -3;
+    }
 }
 
 template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
@@ -316,10 +360,10 @@ struct Value {
 template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
 std::wostream &operator<<(std::wostream &os, Value<T, exponent, pos, pos_arr, neg, neg_arr> const &m) { 
     init_locale();
-    return os << wget_value_string<T, exponent>(m.value) << wget_unit_string<pos, pos_arr, neg, neg_arr>();
+    return os << wget_value_string<T, exponent + get_unit_exponent_offset<pos, pos_arr, neg, neg_arr>()>(m.value) << wget_unit_string<pos, pos_arr, neg, neg_arr>();
 }
 
 template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
 std::ostream &operator<<(std::ostream &os, Value<T, exponent, pos, pos_arr, neg, neg_arr> const &m) { 
-    return os << get_value_string<T, exponent>(m.value) << get_unit_string<pos, pos_arr, neg, neg_arr>();
+    return os << get_value_string<T, exponent + get_unit_exponent_offset<pos, pos_arr, neg, neg_arr>()>(m.value) << get_unit_string<pos, pos_arr, neg, neg_arr>();
 }
