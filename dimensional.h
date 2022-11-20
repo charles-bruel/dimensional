@@ -311,7 +311,8 @@ namespace {
 template<class T, int exponent, std::size_t pos, std::array<Unit, pos> pos_arr, std::size_t neg, std::array<Unit, neg> neg_arr>
 struct Value {
     Value(T v) { value = v; }
-
+    Value() { value = 0; }
+    
     T value;
 
     constexpr Value operator+ (Value const &obj) {
@@ -354,6 +355,38 @@ struct Value {
         constexpr auto new_exponent = exponent - exponent2;
         auto temp = Value<T, new_exponent, new_len_pos, new_arr_pos, new_len_neg, new_arr_neg>(value / obj.value);
         return temp.rationalize();
+    }
+
+    Value& operator=(const Value& other)
+    {
+        if (this == &other)
+            return *this;
+        value = other.value;
+        return *this;
+    }
+
+    Value& operator=(const T& other)
+    {
+        value = other;
+        return *this;
+    }
+
+    template<int exponent2>
+    Value& operator=(const Value<T, exponent2, pos, pos_arr, neg, neg_arr>& other)
+    {
+        value = other.value;
+        constexpr int exponent_difference = exponent2 - exponent;
+        //TODO: Make faster
+        if constexpr (exponent_difference > 0) {
+            for(int i = 0;i < exponent_difference;i ++) {
+                value *= 10;
+            }
+        } else {
+            for(int i = 0;i > exponent_difference;i --) {
+                value /= 10;
+            }
+        }
+        return *this;
     }
 };
 
